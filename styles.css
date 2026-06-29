@@ -1,0 +1,12 @@
+/* Extra styling voor het sleepspel */
+.dragging { 
+    opacity: 0.5; 
+    transform: scale(1.02); 
+}
+#drag-container::-webkit-scrollbar {
+    width: 6px;
+}
+#drag-container::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 10px;
+}
