@@ -109,35 +109,70 @@ function checkDragOrder() {
     }
 }
 function loadQuizQuestion() {
-    answered = false; document.getElementById('quiz-feedback').classList.add('hidden'); document.getElementById('btn-next-question').classList.add('hidden');
-    const currentQuestion = quizQuestions[currentQuizIndex];
-    document.getElementById('quiz-progress').innerText = `Vraag ${currentQuizIndex + 1} van ${quizQuestions.length}`;
-    document.getElementById('quiz-score').innerText = `Score: ${score}`; document.getElementById('quiz-question').innerText = currentQuestion.q;
-    const optionsContainer = document.getElementById('quiz-options'); optionsContainer.innerHTML = '';
+    answered = false; 
+    document.getElementById('quiz-feedback').classList.add('hidden'); 
+    document.getElementById('btn-next-question').classList.add('hidden');
+    
+    // Zorg dat we de vragen altijd vers inladen uit questions.js
+    const activeQuestions = typeof quizQuestions !== 'undefined' ? quizQuestions : [];
+    
+    if (activeQuestions.length === 0) {
+        document.getElementById('quiz-question').innerText = "⚠️ Fout: Vragen konden niet worden geladen uit questions.js.";
+        return;
+    }
+
+    const currentQuestion = activeQuestions[currentQuizIndex];
+    document.getElementById('quiz-progress').innerText = `Vraag ${currentQuizIndex + 1} van ${activeQuestions.length}`;
+    document.getElementById('quiz-score').innerText = `Score: ${score}`; 
+    document.getElementById('quiz-question').innerText = currentQuestion.q;
+    
+    const optionsContainer = document.getElementById('quiz-options'); 
+    optionsContainer.innerHTML = '';
+    
     currentQuestion.answers.forEach((answer, index) => {
-        const btn = document.createElement('button'); btn.className = "w-full py-3 px-4 bg-slate-700 hover:bg-slate-600 rounded-xl font-medium text-left transition cursor-pointer border border-slate-600";
-        btn.innerText = answer; btn.onclick = () => selectAnswer(index, btn); optionsContainer.appendChild(btn);
+        const btn = document.createElement('button'); 
+        btn.className = "w-full py-3 px-4 bg-slate-700 hover:bg-slate-650 rounded-xl font-medium text-left transition cursor-pointer border border-slate-600";
+        btn.innerText = answer; 
+        btn.onclick = () => selectAnswer(index, btn); 
+        optionsContainer.appendChild(btn);
     });
 }
+
 function selectAnswer(selectedIndex, clickedBtn) {
-    if (answered) return; answered = true; const currentQuestion = quizQuestions[currentQuizIndex];
-    const feedback = document.getElementById('quiz-feedback'); feedback.classList.remove('hidden');
-    const optionsContainer = document.getElementById('quiz-options'); const buttons = optionsContainer.getElementsByTagName('button');
+    if (answered) return; 
+    answered = true; 
+    const activeQuestions = typeof quizQuestions !== 'undefined' ? quizQuestions : [];
+    const currentQuestion = activeQuestions[currentQuizIndex];
+    
+    const feedback = document.getElementById('quiz-feedback'); 
+    feedback.classList.remove('hidden');
+    const optionsContainer = document.getElementById('quiz-options'); 
+    const buttons = optionsContainer.getElementsByTagName('button');
+    
     if (selectedIndex === currentQuestion.correct) {
-        score += 10; clickedBtn.className = "w-full py-3 px-4 bg-emerald-600 rounded-xl font-medium text-left border border-emerald-400";
-        feedback.innerText = "✅ Ding! Heel goed."; feedback.className = "text-center text-sm font-bold mb-3 text-emerald-400";
+        score += 10; 
+        clickedBtn.className = "w-full py-3 px-4 bg-emerald-600 rounded-xl font-medium text-left border border-emerald-400";
+        feedback.innerText = "✅ Ding! Heel goed."; 
+        feedback.className = "text-center text-sm font-bold mb-3 text-emerald-400";
     } else {
         clickedBtn.className = "w-full py-3 px-4 bg-red-600 rounded-xl font-medium text-left border border-red-400";
         buttons[currentQuestion.correct].className = "w-full py-3 px-4 bg-emerald-600 rounded-xl font-medium text-left border border-emerald-400";
-        feedback.innerText = "❌ Boem! Fout antwoord."; feedback.className = "text-center text-sm font-bold mb-3 text-red-400";
+        feedback.innerText = "❌ Boem! Fout antwoord."; 
+        feedback.className = "text-center text-sm font-bold mb-3 text-red-400";
     }
-    document.getElementById('quiz-score').innerText = `Score: ${score}`; document.getElementById('btn-next-question').classList.remove('hidden');
+    document.getElementById('quiz-score').innerText = `Score: ${score}`; 
+    document.getElementById('btn-next-question').classList.remove('hidden');
 }
+
 function nextQuestion() {
     currentQuizIndex++;
-    if (currentQuizIndex < quizQuestions.length) { loadQuizQuestion(); } else {
+    const activeQuestions = typeof quizQuestions !== 'undefined' ? quizQuestions : [];
+    if (currentQuizIndex < activeQuestions.length) { 
+        loadQuizQuestion(); 
+    } else {
         document.getElementById('quiz-question').innerText = "🏁 Toets Afgerond!";
         document.getElementById('quiz-options').innerHTML = `<p class='text-center text-slate-300 my-4'>Je eindscore is: <strong class='text-xl text-purple-400'>${score} punten</strong>!</p>`;
-        document.getElementById('quiz-feedback').classList.add('hidden'); document.getElementById('btn-next-question').classList.add('hidden');
+        document.getElementById('quiz-feedback').classList.add('hidden'); 
+        document.getElementById('btn-next-question').classList.add('hidden');
     }
 }
