@@ -215,3 +215,31 @@ switchScreen = function(screenId) {
         updateProgressDashboard();
     }
 }
+// ================= SERVER KOPPELING LOGICA =================
+let activeUsername = "";
+const SERVER_URL = "http://localhost:5000"; // Je lokale test-server
+
+function loginUser() {
+    const input = document.getElementById('username-input');
+    const status = document.getElementById('login-status');
+    
+    if (!input.value.trim()) {
+        alert("Vul eerst een gebruikersnaam in!");
+        return;
+    }
+    
+    activeUsername = input.value.trim();
+    status.classList.remove('hidden');
+    status.innerText = `✅ Gekoppeld als: ${activeUsername}`;
+    status.className = "text-[11px] text-green-400 mt-1";
+    input.disabled = true;
+}
+
+// Pas de bestaande updateProgressDashboard aan om echte data op te halen (als er ingelogd is)
+function fetchRealProgress() {
+    if (!activeUsername) return;
+
+    // Zodra we de API-routes in de backend maken, halen we hier de data op.
+    // Voor nu logt hij dat de koppeling met de database-structuur klaarstaat!
+    console.log(`Echte voortgang opvragen voor ${activeUsername} via ${SERVER_URL}`);
+}
