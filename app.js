@@ -176,3 +176,42 @@ function nextQuestion() {
         document.getElementById('btn-next-question').classList.add('hidden');
     }
 }
+// ================= VOORTGANG LOGICA =================
+// Lokale dummy-data zolang de SQLite database nog niet is gekoppeld
+const mockProgressData = [
+    { topic: "Grote Bloedsomloop", percentage: 92, color: "bg-red-500" },
+    { topic: "Kleine Bloedsomloop", percentage: 71, color: "bg-blue-500" },
+    { topic: "Hartkamers & Boezems", percentage: 100, color: "bg-purple-500" },
+    { topic: "Bloedvaten & Kleppen", percentage: 84, color: "bg-emerald-500" }
+];
+
+function updateProgressDashboard() {
+    const container = document.getElementById('progress-bars-container');
+    container.innerHTML = ''; // Maak de container leeg
+
+    mockProgressData.forEach(item => {
+        const row = document.createElement('div');
+        row.className = "space-y-1";
+        
+        row.innerHTML = `
+            <div class="flex justify-between text-xs font-semibold px-1">
+                <span class="text-slate-300">${item.topic}</span>
+                <span class="text-amber-400">${item.percentage}%</span>
+            </div>
+            <div class="w-full bg-slate-900 rounded-full h-3 border border-slate-700 overflow-hidden">
+                <div class="${item.color} h-full rounded-full transition-all duration-1000" style="width: ${item.percentage}%"></div>
+            </div>
+        `;
+        
+        container.appendChild(row);
+    });
+}
+
+// Pas de bestaande switchScreen aan om ook de voortgang te updaten
+const originalSwitchScreen = switchScreen;
+switchScreen = function(screenId) {
+    originalSwitchScreen(screenId);
+    if(screenId === 'screen-progress') {
+        updateProgressDashboard();
+    }
+}
