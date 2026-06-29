@@ -14,11 +14,15 @@ const route = [
 ];
 
 let currentStep = 0;
+let currentQuizIndex = 0;
+let score = 0;
+let answered = false;
 
 function switchScreen(screenId) {
     document.getElementById('screen-home').classList.add('hidden');
     document.getElementById('screen-learn').classList.add('hidden');
     document.getElementById('screen-drag').classList.add('hidden');
+    document.getElementById('screen-quiz').classList.add('hidden');
     document.getElementById(screenId).classList.remove('hidden');
     
     if(screenId === 'screen-learn') {
@@ -26,6 +30,10 @@ function switchScreen(screenId) {
         updateStation();
     } else if(screenId === 'screen-drag') {
         initDragGame();
+    } else if(screenId === 'screen-quiz') {
+        currentQuizIndex = 0;
+        score = 0;
+        loadQuizQuestion();
     }
 }
 
@@ -35,7 +43,6 @@ function updateStation() {
     const nameEl = document.getElementById('station-name');
     const typeEl = document.getElementById('blood-type');
     const textEl = document.getElementById('station-text');
-
     nameEl.innerText = station.name;
     textEl.innerText = station.text;
 
@@ -61,71 +68,37 @@ function updateStation() {
         typeEl.className = "text-xs font-semibold mt-1 px-2 py-0.5 rounded bg-emerald-900/50 text-emerald-400";
     }
 }
-
-function nextStation() {
-    currentStep = (currentStep + 1) % route.length;
-    updateStation();
-}
-
+function nextStation() { currentStep = (currentStep + 1) % route.length; updateStation(); }
 function initDragGame() {
     const container = document.getElementById('drag-container');
     const feedback = document.getElementById('game-feedback');
-    feedback.classList.add('hidden');
-    container.innerHTML = '';
-
+    feedback.classList.add('hidden'); container.innerHTML = '';
     const shuffled = [...route].slice(0, 6).sort(() => Math.random() - 0.5);
-
     shuffled.forEach(item => {
-        const el = document.createElement('div');
-        el.dataset.id = item.id;
-        el.draggable = true;
+        const el = document.createElement('div'); el.dataset.id = item.id; el.draggable = true;
         el.className = "p-3 bg-slate-700 hover:bg-slate-600 rounded-xl cursor-grab flex items-center gap-3 border border-slate-600 font-medium select-none";
         el.innerHTML = `<span>☰</span> <span>${item.name}</span>`;
-
         el.addEventListener('dragstart', () => el.classList.add('dragging'));
         el.addEventListener('dragend', () => el.classList.remove('dragging'));
-
         container.appendChild(el);
     });
-
     container.addEventListener('dragover', e => {
-        e.preventDefault();
-        const afterElement = getDragAfterElement(container, e.clientY);
+        e.preventDefault(); const afterElement = getDragAfterElement(container, e.clientY);
         const dragging = document.querySelector('.dragging');
-        if (afterElement == null) {
-            container.appendChild(dragging);
-        } else {
-            container.insertBefore(dragging, afterElement);
-        }
+        if (afterElement == null) { container.appendChild(dragging); } else { container.insertBefore(dragging, afterElement); }
     });
 }
-
 function getDragAfterElement(container, y) {
     const draggableElements = [...container.querySelectorAll('[draggable="true"]:not(.dragging)')];
     return draggableElements.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-        if (offset < 0 && offset > closest.offset) {
-            return { offset: offset, element: child };
-        } else {
-            return closest;
-        }
+        const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) { return { offset: offset, element: child }; } else { return closest; }
     }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
-
 function checkDragOrder() {
-    const container = document.getElementById('drag-container');
-    const items = [...container.children];
-    const feedback = document.getElementById('game-feedback');
-    
-    let correct = true;
-    for (let i = 0; i < items.length - 1; i++) {
-        if (parseInt(items[i].dataset.id) > parseInt(items[i+1].dataset.id)) {
-            correct = false;
-            break;
-        }
-    }
-
+    const container = document.getElementById('drag-container'); const items = [...container.children];
+    const feedback = document.getElementById('game-feedback'); let correct = true;
+    for (let i = 0; i < items.length - 1; i++) { if (parseInt(items[i].dataset.id) > parseInt(items[i+1].dataset.id)) { correct = false; break; } }
     feedback.classList.remove('hidden');
     if (correct) {
         feedback.innerText = "🎉 Perfect! Alles staat in de juiste volgorde.";
@@ -133,5 +106,38 @@ function checkDragOrder() {
     } else {
         feedback.innerText = "❌ Probeer opnieuw. De volgorde klopt nog niet.";
         feedback.className = "text-center text-sm font-bold mb-3 text-red-400 bg-red-950/40 p-2 rounded-xl border border-red-800";
+    }
+}
+function loadQuizQuestion() {
+    answered = false; document.getElementById('quiz-feedback').classList.add('hidden'); document.getElementById('btn-next-question').classList.add('hidden');
+    const currentQuestion = quizQuestions[currentQuizIndex];
+    document.getElementById('quiz-progress').innerText = `Vraag ${currentQuizIndex + 1} van ${quizQuestions.length}`;
+    document.getElementById('quiz-score').innerText = `Score: ${score}`; document.getElementById('quiz-question').innerText = currentQuestion.q;
+    const optionsContainer = document.getElementById('quiz-options'); optionsContainer.innerHTML = '';
+    currentQuestion.answers.forEach((answer, index) => {
+        const btn = document.createElement('button'); btn.className = "w-full py-3 px-4 bg-slate-700 hover:bg-slate-600 rounded-xl font-medium text-left transition cursor-pointer border border-slate-600";
+        btn.innerText = answer; btn.onclick = () => selectAnswer(index, btn); optionsContainer.appendChild(btn);
+    });
+}
+function selectAnswer(selectedIndex, clickedBtn) {
+    if (answered) return; answered = true; const currentQuestion = quizQuestions[currentQuizIndex];
+    const feedback = document.getElementById('quiz-feedback'); feedback.classList.remove('hidden');
+    const optionsContainer = document.getElementById('quiz-options'); const buttons = optionsContainer.getElementsByTagName('button');
+    if (selectedIndex === currentQuestion.correct) {
+        score += 10; clickedBtn.className = "w-full py-3 px-4 bg-emerald-600 rounded-xl font-medium text-left border border-emerald-400";
+        feedback.innerText = "✅ Ding! Heel goed."; feedback.className = "text-center text-sm font-bold mb-3 text-emerald-400";
+    } else {
+        clickedBtn.className = "w-full py-3 px-4 bg-red-600 rounded-xl font-medium text-left border border-red-400";
+        buttons[currentQuestion.correct].className = "w-full py-3 px-4 bg-emerald-600 rounded-xl font-medium text-left border border-emerald-400";
+        feedback.innerText = "❌ Boem! Fout antwoord."; feedback.className = "text-center text-sm font-bold mb-3 text-red-400";
+    }
+    document.getElementById('quiz-score').innerText = `Score: ${score}`; document.getElementById('btn-next-question').classList.remove('hidden');
+}
+function nextQuestion() {
+    currentQuizIndex++;
+    if (currentQuizIndex < quizQuestions.length) { loadQuizQuestion(); } else {
+        document.getElementById('quiz-question').innerText = "🏁 Toets Afgerond!";
+        document.getElementById('quiz-options').innerHTML = `<p class='text-center text-slate-300 my-4'>Je eindscore is: <strong class='text-xl text-purple-400'>${score} punten</strong>!</p>`;
+        document.getElementById('quiz-feedback').classList.add('hidden'); document.getElementById('btn-next-question').classList.add('hidden');
     }
 }
